@@ -22,7 +22,7 @@ workflows:
       - name: Download prepared Xcode project from Google Drive
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=11GnTRd7mBc_DTYstXDJCLujUyagOwxDQ&export=download&authuser=0&confirm=t&uuid=2aaee153-cf70-4308-838b-de0e7b7490c1&at=ALWLOp5n-a64i74-FWfVp5A1B2JM%3A1765460892152" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1CB2XYBxh_2J918idztblFatjNTP1ZpkX&export=download&authuser=0&confirm=t&uuid=3073ff61-3bb2-4570-8ea4-8ef58428adc6&at=ALWLOp77IDN_dwpph-LDcdijZn49%3A1765455131366" -o project.zip
           unzip -o project.zip -d ios
           echo "Contents of ios directory:"
           ls -R ios
@@ -31,6 +31,13 @@ workflows:
         script: |
           cd $UNITY_IOS_DIR
           xcode-project use-profiles
+
+      - name: Enable modules for UnityFramework
+        script: |
+          cd $UNITY_IOS_DIR
+          # Включаем CLANG_ENABLE_MODULES для UnityFramework
+          sed -i '' 's/CLANG_ENABLE_MODULES = NO/CLANG_ENABLE_MODULES = YES/g' Unity-iPhone.xcodeproj/project.pbxproj
+          echo "CLANG_ENABLE_MODULES set to YES for UnityFramework"
 
       - name: Set version and build number
         script: |
@@ -44,7 +51,7 @@ workflows:
           xcode-project build-ipa \
             --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME" \
-           
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual"
 
     artifacts:
       - build/ios/ipa/*.ipa
@@ -53,5 +60,4 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
         submit_to_app_store: true
