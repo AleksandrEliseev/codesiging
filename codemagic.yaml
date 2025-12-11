@@ -22,8 +22,10 @@ workflows:
       - name: Download prepared Xcode project from Google Drive
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=1nL29IAGTCNgkeElrGYRyQfSlhJgiqbZ4&export=download&authuser=0&confirm=t&uuid=53b7beb0-18f5-43fa-bb26-2ea6c8cf41c1&at=ALWLOp5M53Wy5qxg76hn6W9fj5gm%3A1765444855851" -o project.zip
-          unzip -o project.zip -d $UNITY_IOS_DIR
+          curl -L "https://drive.usercontent.google.com/download?id=1CB2XYBxh_2J918idztblFatjNTP1ZpkX&export=download&authuser=0&confirm=t&uuid=3073ff61-3bb2-4570-8ea4-8ef58428adc6&at=ALWLOp77IDN_dwpph-LDcdijZn49%3A1765455131366" -o project.zip
+          unzip -o project.zip -d ios
+          echo "Contents of ios directory:"
+          ls -R ios
 
       - name: Set up code signing settings on Xcode project
         script: |
@@ -32,7 +34,7 @@ workflows:
       - name: Build the project
         script: |
           xcode-project build-ipa \
-            --workspace "project/Unity-iPhone.xcworkspace"
+            --project "ios/Unity-iPhone.xcodeproj"
             --scheme "$XCODE_SCHEME"
 
     artifacts:
