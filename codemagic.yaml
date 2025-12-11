@@ -28,10 +28,10 @@ workflows:
           echo "Contents of ios directory:"
           ls -R ios
 
-      - name: Fix code signing settings
+     - name: Fix code signing settings
         script: |
           cd $UNITY_IOS_DIR
-          xcode-project use-profiles --team-id "$TEAM_ID" --code-sign-identity "Apple Distribution"
+          xcode-project use-profiles
 
       - name: Set version and build number
         script: |
