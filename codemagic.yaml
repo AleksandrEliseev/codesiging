@@ -22,7 +22,7 @@ workflows:
       - name: Download prepared Xcode project from Google Drive
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=1PFjp8DeA6YnwV2-1zcYnixtxVyCbkqNm&export=download&authuser=0&confirm=t&uuid=ca9653e4-e1a1-4730-aea9-40db873f7b7e&at=ALWLOp51FQ18uxuJOG0EyMldiArs%3A1765478751844" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1h149CKwGDEXSx2zEphV_-TllUnYd8fN4&export=download&authuser=0&confirm=t&uuid=bbb9fad2-8056-4d3d-8a43-4c52f5ff3cd6&at=ALWLOp4-xKg69tJg_7tfBJ9PjSPG%3A1765479610332" -o project.zip
           unzip -o project.zip -d ios
           echo "Contents of ios directory:"
           ls -R ios
