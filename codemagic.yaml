@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 120
 
     integrations:
-      app_store_connect: ToyConnect   # имя интеграции из Team settings
+      app_store_connect: ToyConnect
 
     environment:
       xcode: latest
@@ -31,10 +31,17 @@ workflows:
         script: |
           xcode-project use-profiles
 
+      - name: Set version and build number
+        script: |
+          cd $UNITY_IOS_DIR
+          agvtool new-marketing-version 1.0
+          agvtool new-version -all 1
+          echo "Version set to 1.0, build number set to 1"
+
       - name: Build the project
         script: |
           xcode-project build-ipa \
-            --workspace "ios/Unity-iPhone.xcworkspace" \
+            --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME"
 
     artifacts:
@@ -44,8 +51,4 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
-        beta_groups:
-          - group name 1
-          - group name 2
         submit_to_app_store: true
