@@ -1,13 +1,63 @@
 workflows:
-  ios-build:
-    name: iOS Build from Google Drive
+  unity-ios-workflow:
+    name: Unity iOS Workflow
+    max_build_duration: 120
+
+    integrations:
+      app_store_connect: codemagic
+
     environment:
       xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.gem.toy
       vars:
-        GDRIVE_FILE_ID: "ВАШ_ID_ФАЙЛА"   # ID архива проекта в Google Drive
+        UNITY_IOS_DIR: ios
+        XCODE_PROJECT: "Unity-iPhone.xcodeproj"
+        XCODE_SCHEME: "Unity-iPhone"
+        BUNDLE_ID: "com.gem.toy"
+        APP_STORE_APPLE_ID: 6756122152
+
     scripts:
-      - name: Download project from Google Drive
+      - name: Download prepared Xcode project from Google Drive
         script: |
-          echo "Downloading project archive..."
-          curl -L "https://drive.google.com/uc?export=download&id=$GDRIVE_FILE_ID" -o project.zip
-          unzip -o project.zip -d project
+          echo "Downloading prepared Xcode project..."
+          curl -L "https://drive.usercontent.google.com/download?id=1nL29IAGTCNgkeElrGYRyQfSlhJgiqbZ4&export=download&authuser=0&confirm=t&uuid=53b7beb0-18f5-43fa-bb26-2ea6c8cf41c1&at=ALWLOp5M53Wy5qxg76hn6W9fj5gm%3A1765444855851" -o project.zip
+          unzip -o project.zip -d $UNITY_IOS_DIR
+
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Set the build number
+        script: |
+          BUILD_NUMBER=$(($(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID") + 1))
+          cd $UNITY_IOS_DIR
+          agvtool new-version -all $BUILD_NUMBER
+
+      - name: Build the project
+        script: |
+          xcode-project build-ipa \
+            --project "$UNITY_IOS_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      email:
+        recipients:
+          - user_1@example.com
+          - user_2@example.com
+        notify:
+          success: true
+          failure: false
+
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - group name 1
+          - group name 2
+        submit_to_app_store: true
