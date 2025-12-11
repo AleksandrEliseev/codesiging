@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 120
 
     integrations:
-      app_store_connect: ToyConnect
+      app_store_connect: ToyConnect   # интеграция из Team settings
 
     environment:
       xcode: latest
@@ -17,6 +17,7 @@ workflows:
         XCODE_SCHEME: "Unity-iPhone"
         BUNDLE_ID: "com.gem.toy"
         APP_STORE_APPLE_ID: 6756122152
+        TEAM_ID: ZBXQD67DFW   # твой реальный Team ID
 
     scripts:
       - name: Download prepared Xcode project from Google Drive
@@ -27,9 +28,10 @@ workflows:
           echo "Contents of ios directory:"
           ls -R ios
 
-      - name: Set up code signing settings on Xcode project
+      - name: Fix code signing settings
         script: |
-          xcode-project use-profiles
+          cd $UNITY_IOS_DIR
+          xcode-project use-profiles --team-id "$TEAM_ID" --code-sign-identity "Apple Distribution"
 
       - name: Set version and build number
         script: |
@@ -51,4 +53,4 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_app_store: true
+        submit_to_testflight: true
