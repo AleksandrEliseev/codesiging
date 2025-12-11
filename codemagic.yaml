@@ -1,0 +1,26 @@
+workflows:
+  ios-build:
+    name: iOS Build from Google Drive
+    environment:
+      xcode: latest
+      vars:
+        GDRIVE_FILE_ID: "ВАШ_ID_ФАЙЛА"   # ID архива проекта в Google Drive
+    scripts:
+      - name: Download project from Google Drive
+        script: |
+          echo "Downloading project archive..."
+          curl -L "https://drive.google.com/uc?export=download&id=$GDRIVE_FILE_ID" -o project.zip
+          unzip -o project.zip -d project
+      - name: Build iOS app
+        script: |
+          cd project
+          xcodebuild \
+            -workspace MyApp.xcworkspace \
+            -scheme MyApp \
+            -sdk iphoneos \
+            -configuration Release
+    artifacts:
+      - project/build/**/*.ipa
+    publishing:
+      app_store_connect:
+        api_key: Encrypted(...)   # ключ для деплоя
