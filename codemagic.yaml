@@ -17,7 +17,6 @@ workflows:
         XCODE_SCHEME: "Unity-iPhone"
         BUNDLE_ID: "com.gem.toy"
         APP_STORE_APPLE_ID: 6756122152
-        TEAM_ID: ZBXQD67DFW   # твой реальный Team ID
 
     scripts:
       - name: Download prepared Xcode project from Google Drive
@@ -28,7 +27,7 @@ workflows:
           echo "Contents of ios directory:"
           ls -R ios
 
-     - name: Fix code signing settings
+      - name: Fix code signing settings
         script: |
           cd $UNITY_IOS_DIR
           xcode-project use-profiles
@@ -54,3 +53,4 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+        submit_to_app_store: true
