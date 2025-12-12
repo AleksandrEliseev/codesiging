@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 120
 
     integrations:
-      app_store_connect: ToyConnect   # интеграция из Team settings
+      app_store_connect: ToyConnect
 
     environment:
       xcode: latest
@@ -22,7 +22,7 @@ workflows:
       - name: Download prepared Xcode project from Google Drive
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=14QS8H_nbzd8dS5tcDlYPBFh63VJq9kb8&export=download&authuser=0&confirm=t&uuid=ff1451ae-1304-44a4-aec0-2b27ac609334&at=ALWLOp7FpB8iR1cvM6qRbz8bZOv_%3A1765481145262" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=18Ih4zf3I3rrXmlEH8U1LhA-Q-dGwTMcl&export=download&authuser=0&confirm=t&uuid=950e6f19-95b9-4207-bcbf-d4c6e2749877&at=ALWLOp5waZHHCRMPE1c7b_j9Fl20%3A1765528929111" -o project.zip
           unzip -o project.zip -d ios
           echo "Contents of ios directory:"
           ls -R ios
@@ -38,9 +38,12 @@ workflows:
           # Включаем поддержку модулей и определение модуля
           sed -i '' 's/CLANG_ENABLE_MODULES = NO/CLANG_ENABLE_MODULES = YES/g' Unity-iPhone.xcodeproj/project.pbxproj || true
           sed -i '' 's/DEFINES_MODULE = NO/DEFINES_MODULE = YES/g' Unity-iPhone.xcodeproj/project.pbxproj || true
-          # Убираем жёсткий Werror
+          # Убираем все Werror
           sed -i '' 's/-Werror=non-modular-include-in-framework-module//g' Unity-iPhone.xcodeproj/project.pbxproj || true
-          echo "Patched UnityFramework: modules enabled, DEFINES_MODULE set, Werror removed"
+          sed -i '' 's/-Werror//g' Unity-iPhone.xcodeproj/project.pbxproj || true
+          # Подавляем deprecated warnings
+          sed -i '' 's/OTHER_CFLAGS = (/OTHER_CFLAGS = (-Wno-deprecated-declarations /g' Unity-iPhone.xcodeproj/project.pbxproj || true
+          echo "Patched UnityFramework: modules enabled, DEFINES_MODULE set, all Werror removed, deprecated warnings disabled"
 
       - name: Set version and build number
         script: |
@@ -54,7 +57,7 @@ workflows:
           xcode-project build-ipa \
             --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual"
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual -allowProvisioningUpdates"
 
     artifacts:
       - build/ios/ipa/*.ipa
@@ -63,5 +66,4 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
         submit_to_app_store: true
