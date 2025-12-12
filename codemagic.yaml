@@ -22,7 +22,7 @@ workflows:
       - name: Download prepared Xcode project from Google Drive
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=18Ih4zf3I3rrXmlEH8U1LhA-Q-dGwTMcl&export=download&authuser=0&confirm=t&uuid=950e6f19-95b9-4207-bcbf-d4c6e2749877&at=ALWLOp5waZHHCRMPE1c7b_j9Fl20%3A1765528929111" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1WxinhWUEc3QhOIqzt1SOle5g-pWKw6zK&export=download&authuser=0&confirm=t&uuid=83725fce-2228-4287-92a9-86ae3ff97dd7&at=ALWLOp7gpVX4uQx4DLjo0VZjJpfR%3A1765534019924" -o project.zip
           unzip -o project.zip -d ios
           echo "Contents of ios directory:"
           ls -R ios
@@ -32,12 +32,7 @@ workflows:
           cd $UNITY_IOS_DIR
           xcode-project use-profiles
 
-      - name: Remove Werror from UnityFramework
-        script: |
-          cd $UNITY_IOS_DIR
-          # Убираем все упоминания Werror=non-modular-include-in-framework-module
-          sed -i '' 's/-Werror=non-modular-include-in-framework-module//g' Unity-iPhone.xcodeproj/project.pbxproj
-          echo "Removed -Werror=non-modular-include-in-framework-module from project.pbxproj"
+     
     
       - name: Set version and build number
         script: |
