@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 120
 
     integrations:
-      app_store_connect: ToyConnect
+      app_store_connect: ToyConnect   # интеграция из Team settings
 
     environment:
       xcode: latest
@@ -32,18 +32,12 @@ workflows:
           cd $UNITY_IOS_DIR
           xcode-project use-profiles
 
-      - name: Patch UnityFramework build settings
+      - name: Enable modules for UnityFramework
         script: |
           cd $UNITY_IOS_DIR
-          # Включаем поддержку модулей и определение модуля
-          sed -i '' 's/CLANG_ENABLE_MODULES = NO/CLANG_ENABLE_MODULES = YES/g' Unity-iPhone.xcodeproj/project.pbxproj || true
-          sed -i '' 's/DEFINES_MODULE = NO/DEFINES_MODULE = YES/g' Unity-iPhone.xcodeproj/project.pbxproj || true
-          # Убираем все Werror
-          sed -i '' 's/-Werror=non-modular-include-in-framework-module//g' Unity-iPhone.xcodeproj/project.pbxproj || true
-          sed -i '' 's/-Werror//g' Unity-iPhone.xcodeproj/project.pbxproj || true
-          # Подавляем deprecated warnings
-          sed -i '' 's/OTHER_CFLAGS = (/OTHER_CFLAGS = (-Wno-deprecated-declarations /g' Unity-iPhone.xcodeproj/project.pbxproj || true
-          echo "Patched UnityFramework: modules enabled, DEFINES_MODULE set, all Werror removed, deprecated warnings disabled"
+          # Включаем CLANG_ENABLE_MODULES для UnityFramework
+          sed -i '' 's/CLANG_ENABLE_MODULES = NO/CLANG_ENABLE_MODULES = YES/g' Unity-iPhone.xcodeproj/project.pbxproj
+          echo "CLANG_ENABLE_MODULES set to YES for UnityFramework"
 
       - name: Set version and build number
         script: |
@@ -57,7 +51,7 @@ workflows:
           xcode-project build-ipa \
             --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual -allowProvisioningUpdates"
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual"
 
     artifacts:
       - build/ios/ipa/*.ipa
