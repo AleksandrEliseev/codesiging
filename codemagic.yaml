@@ -46,7 +46,7 @@ workflows:
           agvtool new-version -all 1
           echo "Version set to 1.0, build number set to 1"
 
-     - name: Build the project
+      - name: Build the project
         script: |
           xcode-project build-ipa \
             --project "ios/Unity-iPhone.xcodeproj" \
