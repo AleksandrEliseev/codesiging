@@ -51,7 +51,8 @@ workflows:
           xcode-project build-ipa \
             --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual"
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual GCC_WARN_INHIBIT_ALL_WARNINGS=YES OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module'"
+
 
     artifacts:
       - build/ios/ipa/*.ipa
