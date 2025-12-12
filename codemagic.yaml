@@ -35,9 +35,14 @@ workflows:
       - name: Enable modules for UnityFramework
         script: |
           cd $UNITY_IOS_DIR
-          # Включаем CLANG_ENABLE_MODULES для UnityFramework
           sed -i '' 's/CLANG_ENABLE_MODULES = NO/CLANG_ENABLE_MODULES = YES/g' Unity-iPhone.xcodeproj/project.pbxproj
           echo "CLANG_ENABLE_MODULES set to YES for UnityFramework"
+
+      - name: Patch UnityFramework build settings
+        script: |
+          cd $UNITY_IOS_DIR
+          sed -i '' 's/Werror=non-modular-include-in-framework-module/Wno-error=non-modular-include-in-framework-module/g' Unity-iPhone.xcodeproj/project.pbxproj
+          echo "Suppressed non-modular include error in UnityFramework"
 
       - name: Set version and build number
         script: |
@@ -51,8 +56,8 @@ workflows:
           xcode-project build-ipa \
             --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=15' SWIFT_SUPPRESS_WARNINGS=YES"
-            
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual CLANG_ENABLE_MODULES=YES OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=15' SWIFT_SUPPRESS_WARNINGS=YES"
+
     artifacts:
       - build/ios/ipa/*.ipa
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
