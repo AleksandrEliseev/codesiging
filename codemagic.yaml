@@ -46,14 +46,13 @@ workflows:
           agvtool new-version -all 1
           echo "Version set to 1.0, build number set to 1"
 
-      - name: Build the project
+     - name: Build the project
         script: |
           xcode-project build-ipa \
             --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual GCC_WARN_INHIBIT_ALL_WARNINGS=YES OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module'"
-
-
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=15' SWIFT_SUPPRESS_WARNINGS=YES"
+            
     artifacts:
       - build/ios/ipa/*.ipa
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
