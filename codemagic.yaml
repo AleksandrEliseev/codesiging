@@ -32,18 +32,13 @@ workflows:
           cd $UNITY_IOS_DIR
           xcode-project use-profiles
 
-      - name: Enable modules for UnityFramework
+      - name: Remove Werror from UnityFramework
         script: |
           cd $UNITY_IOS_DIR
-          sed -i '' 's/CLANG_ENABLE_MODULES = NO/CLANG_ENABLE_MODULES = YES/g' Unity-iPhone.xcodeproj/project.pbxproj
-          echo "CLANG_ENABLE_MODULES set to YES for UnityFramework"
-
-      - name: Patch UnityFramework build settings
-        script: |
-          cd $UNITY_IOS_DIR
-          sed -i '' 's/Werror=non-modular-include-in-framework-module/Wno-error=non-modular-include-in-framework-module/g' Unity-iPhone.xcodeproj/project.pbxproj
-          echo "Suppressed non-modular include error in UnityFramework"
-
+          # Убираем все упоминания Werror=non-modular-include-in-framework-module
+          sed -i '' 's/-Werror=non-modular-include-in-framework-module//g' Unity-iPhone.xcodeproj/project.pbxproj
+          echo "Removed -Werror=non-modular-include-in-framework-module from project.pbxproj"
+    
       - name: Set version and build number
         script: |
           cd $UNITY_IOS_DIR
@@ -57,6 +52,7 @@ workflows:
             --project "ios/Unity-iPhone.xcodeproj" \
             --scheme "$XCODE_SCHEME" \
             --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual CLANG_ENABLE_MODULES=YES OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=15' SWIFT_SUPPRESS_WARNINGS=YES"
+
 
     artifacts:
       - build/ios/ipa/*.ipa
