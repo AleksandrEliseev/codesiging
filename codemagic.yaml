@@ -25,10 +25,24 @@ workflows:
           curl -L "https://drive.usercontent.google.com/download?id=1zG8C0uLhfT0mCP41ybIoWaSVIrVIFDjz&export=download&authuser=0&confirm=t&uuid=cdbf1ca2-bb04-4655-9870-f504178f913c&at=ALWLOp48RwP6QbKP6jyMSAiNpQVy%3A1765736532533" -o project.zip
           unzip -o project.zip -d ios
 
-      - name: Fix code signing & Bitcode
+      - name: Fix code signing, Bitcode & Entitlements
         script: |
           cd $UNITY_IOS_DIR
-          # Автоматическое применение профилей
+          
+          # 1. Отключаем Bitcode
+          xcode-project build-settings --target "Unity-iPhone" --set ENABLE_BITCODE=NO
+          xcode-project build-settings --target "Unity-Framework" --set ENABLE_BITCODE=NO
+          
+          # 2. Убираем требование Push Notifications из entitlements
+          # Это решит ошибку "doesn't support the Push Notifications capability"
+          if [ -f "Unity-iPhone/toy.entitlements" ]; then
+             echo "Found entitlements file. Removing aps-environment..."
+             /usr/libexec/PlistBuddy -c "Delete :aps-environment" Unity-iPhone/toy.entitlements || echo "Key not found, skipping."
+          else
+             echo "Entitlements file not found."
+          fi
+
+          # 3. Применяем профили
           xcode-project use-profiles
         
 
