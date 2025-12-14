@@ -25,6 +25,20 @@ workflows:
           curl -L "https://drive.usercontent.google.com/download?id=1zG8C0uLhfT0mCP41ybIoWaSVIrVIFDjz&export=download&authuser=0&confirm=t&uuid=cdbf1ca2-bb04-4655-9870-f504178f913c&at=ALWLOp48RwP6QbKP6jyMSAiNpQVy%3A1765736532533" -o project.zip
           unzip -o project.zip -d ios
 
+      - name: Fix Permissions (Vital for Unity & Pods)
+        script: |
+          cd $UNITY_IOS_DIR
+          echo "Restoring execution permissions..."
+          
+          # 1. Исправляем ошибку GameAssembly (MapFileParser)
+          find . -type f -name "MapFileParser" -exec chmod +x {} \;
+          
+          # 2. Исправляем ошибку [CP] Copy XCFrameworks (скрипты CocoaPods)
+          find Pods -type f -name "*.sh" -exec chmod +x {} \;
+          
+          # 3. На всякий случай даем права всем shell скриптам
+          chmod -R +x .
+
       - name: Fix code signing, Bitcode & Entitlements
         script: |
           cd $UNITY_IOS_DIR
@@ -34,7 +48,6 @@ workflows:
           xcode-project build-settings --target "Unity-Framework" --set ENABLE_BITCODE=NO
           
           # 2. Убираем требование Push Notifications из entitlements
-          # Это решит ошибку "doesn't support the Push Notifications capability"
           if [ -f "Unity-iPhone/toy.entitlements" ]; then
              echo "Found entitlements file. Removing aps-environment..."
              /usr/libexec/PlistBuddy -c "Delete :aps-environment" Unity-iPhone/toy.entitlements || echo "Key not found, skipping."
@@ -44,26 +57,21 @@ workflows:
 
           # 3. Применяем профили
           xcode-project use-profiles
-        
 
       - name: Set version and build number
         script: |
           cd $UNITY_IOS_DIR
-          # Важно: agvtool работает только внутри папки с проектом
           agvtool new-marketing-version 1.0
           agvtool new-version -all 1
       
       - name: Build the project
         script: |
-          # Явно заходим в папку перед билдом
           cd $UNITY_IOS_DIR
           
-          # Восстанавливаем права на всякий случай тут тоже
-          find . -type f -name "MapFileParser" -exec chmod +x {} \;
+          echo "🚀 Starting Raw xcodebuild..."
           
-          echo "Starting Raw xcodebuild..."
-          
-          # Запускаем напрямую xcodebuild. Если упадет, мы увидим реальную причину в консоли.
+          # Используем xcodebuild напрямую, чтобы видеть ошибки сразу в консоли
+          # Это решает проблему скрытых логов
           xcodebuild -workspace "Unity-iPhone.xcworkspace" \
             -scheme "Unity-iPhone" \
             -configuration Release \
@@ -74,24 +82,22 @@ workflows:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM="ZBXQD67DFW" \
             PROVISIONING_PROFILE_SPECIFIER="sloygem" \
-            ENABLE_BITCODE=NO
-             # Проверяем статус. Если pipefail сработал, $? вернет код ошибки xcode-project
-             BUILD_STATUS=$?
-             
-             if [ $BUILD_STATUS -ne 0 ]; then
-               echo "❌ Build failed with exit code $BUILD_STATUS"
-               echo "📜 Dumping last 500 lines of logs for debugging:"
-               echo "========================================================"
-            
-               # Выводим хвост лога (последние 500 строк)
-               tail -n 500 xcode_build.log
-            
-               echo "========================================================"
-               exit $BUILD_STATUS
-             fi
-        
+            ENABLE_BITCODE=NO \
+            -allowProvisioningUpdates
+
+      - name: Export IPA
+        script: |
+          cd $UNITY_IOS_DIR
+          
+          # Экспортируем IPA из архива, созданного на предыдущем шаге
+          xcodebuild -exportArchive \
+            -archivePath "build.xcarchive" \
+            -exportPath "build/ios/ipa" \
+            -exportOptionsPlist "Info.plist" \
+            -allowProvisioningUpdates
+
     artifacts:
-      - build/ios/ipa/*.ipa
+      - ios/build/ios/ipa/*.ipa
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
