@@ -13,7 +13,7 @@ workflows:
         bundle_identifier: com.gem.toy
       vars:
         UNITY_IOS_DIR: ios
-        XCODE_PROJECT: "Unity-iPhone.xcodeproj"
+        XCODE_WORKSPACE: "Unity-iPhone.xcworkspace"
         XCODE_SCHEME: "Unity-iPhone"
         BUNDLE_ID: "com.gem.toy"
         APP_STORE_APPLE_ID: 6756122152
@@ -22,7 +22,7 @@ workflows:
       - name: Download prepared Xcode project from Google Drive
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=1qjGts4TlK97TaQVLvrVCiOHFONLIonEP&export=download&authuser=0&confirm=t&uuid=d091fd19-65e1-4036-9fab-62206e7cf78d&at=ALWLOp7T1274XRcFR4lx34PFLbAF%3A1765543444478" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1FN9Ujv3sHHZEUjimBpbDhNUgTgY04fB0&export=download&authuser=0&confirm=t&uuid=b642c38e-be3a-4b93-9c76-40d43e988b6c&at=ALWLOp75FGQ8shwEW8IGuYa-RWfg%3A1765722283232" -o project.zip
           unzip -o project.zip -d ios
           echo "Contents of ios directory:"
           ls -R ios
@@ -32,8 +32,6 @@ workflows:
           cd $UNITY_IOS_DIR
           xcode-project use-profiles
 
-     
-    
       - name: Set version and build number
         script: |
           cd $UNITY_IOS_DIR
@@ -44,10 +42,9 @@ workflows:
       - name: Build the project
         script: |
           xcode-project build-ipa \
-            --project "ios/Unity-iPhone.xcodeproj" \
+            --workspace "ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
             --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual CLANG_ENABLE_MODULES=YES OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=15' SWIFT_SUPPRESS_WARNINGS=YES"
-
 
     artifacts:
       - build/ios/ipa/*.ipa
