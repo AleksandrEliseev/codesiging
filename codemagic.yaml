@@ -22,7 +22,7 @@ workflows:
       - name: Download prepared Xcode project
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=1FN9Ujv3sHHZEUjimBpbDhNUgTgY04fB0&export=download&authuser=0&confirm=t&uuid=b642c38e-be3a-4b93-9c76-40d43e988b6c&at=ALWLOp75FGQ8shwEW8IGuYa-RWfg%3A1765722283232" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1zG8C0uLhfT0mCP41ybIoWaSVIrVIFDjz&export=download&authuser=0&confirm=t&uuid=cdbf1ca2-bb04-4655-9870-f504178f913c&at=ALWLOp48RwP6QbKP6jyMSAiNpQVy%3A1765736532533" -o project.zip
           unzip -o project.zip -d ios
 
       - name: Fix code signing & Bitcode
