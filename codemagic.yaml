@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 120
 
     integrations:
-      app_store_connect: ToyConnect   # интеграция из Team settings
+      app_store_connect: ToyConnect
 
     environment:
       xcode: latest
@@ -19,31 +19,38 @@ workflows:
         APP_STORE_APPLE_ID: 6756122152
 
     scripts:
-      - name: Download prepared Xcode project from Google Drive
+      - name: Download prepared Xcode project
         script: |
           echo "Downloading prepared Xcode project..."
           curl -L "https://drive.usercontent.google.com/download?id=1FN9Ujv3sHHZEUjimBpbDhNUgTgY04fB0&export=download&authuser=0&confirm=t&uuid=b642c38e-be3a-4b93-9c76-40d43e988b6c&at=ALWLOp75FGQ8shwEW8IGuYa-RWfg%3A1765722283232" -o project.zip
           unzip -o project.zip -d ios
-          echo "Contents of ios directory:"
-          ls -R ios
 
-      - name: Fix code signing settings
+      - name: Fix code signing & Bitcode
         script: |
           cd $UNITY_IOS_DIR
+          # Автоматическое применение профилей
           xcode-project use-profiles
-         
+          
+          # Принудительно отключаем Bitcode (вызывает ошибку 65 в Xcode 14+)
+          xcode-project build-settings --target "Unity-iPhone" --set ENABLE_BITCODE=NO
+          xcode-project build-settings --target "UnityFramework" --set ENABLE_BITCODE=NO
+
       - name: Set version and build number
         script: |
           cd $UNITY_IOS_DIR
+          # Важно: agvtool работает только внутри папки с проектом
           agvtool new-marketing-version 1.0
           agvtool new-version -all 1
-          echo "Version set to 1.0, build number set to 1"
       
       - name: Build the project
         script: |
+          # Явно заходим в папку перед билдом
+          cd $UNITY_IOS_DIR
+          
+          # Запуск сборки
           xcode-project build-ipa \
-             --workspace "ios/Unity-iPhone.xcworkspace" \
-             --scheme "$XCODE_SCHEME" \
+             --workspace "$XCODE_WORKSPACE" \
+             --scheme "$XCODE_SCHEME"
         
     artifacts:
       - build/ios/ipa/*.ipa
