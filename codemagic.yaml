@@ -42,8 +42,10 @@ workflows:
       - name: Build the project
         script: |
           xcode-project build-ipa \
-          --workspace "ios/Unity-iPhone.xcworkspace" \
-          --scheme "$XCODE_SCHEME" \
+             --workspace "ios/Unity-iPhone.xcworkspace" \
+             --scheme "$XCODE_SCHEME" \
+             --configuration Release \
+             --archive-path build/ios/xcarchive/Unity-iPhone.xcarchive
         
     artifacts:
       - build/ios/ipa/*.ipa
