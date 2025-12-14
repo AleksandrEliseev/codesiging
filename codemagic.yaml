@@ -48,7 +48,31 @@ workflows:
           xcode-project build-ipa \
              --workspace "Unity-iPhone.xcworkspace" \
              --scheme "$XCODE_SCHEME" \
-             --verbose
+             --verbose 2>&1 | tee xcode_build.log
+
+             # PIPESTATUS[0] берет код возврата первой команды (xcode-project), а не tee
+             BUILD_STATUS=${PIPESTATUS[0]}
+             if [ $BUILD_STATUS -ne 0 ]; then
+               echo "❌ Build failed with exit code $BUILD_STATUS"
+               echo "🔍 Analyzing logs for errors..."
+               echo "========================================================"
+            
+               # Ищем строки с "error" (регистронезависимо), показываем 10 строк до и после
+               grep -i -C 10 "error:" xcode_build.log || echo "⚠️ Слово 'error' не найдено в логах."
+            
+               echo "--------------------------------------------------------"
+            
+                # Ищем проблемы с подписью
+               grep -i -C 5 "signing" xcode_build.log || echo "⚠️ Проблем с signing не найдено."
+            
+               echo "--------------------------------------------------------"
+            
+               # Ищем проблемы с Provisioning Profile
+               grep -i -C 5 "Provisioning profile" xcode_build.log
+            
+               echo "========================================================"
+               exit $BUILD_STATUS
+             fi
         
     artifacts:
       - build/ios/ipa/*.ipa
