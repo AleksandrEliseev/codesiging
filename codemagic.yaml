@@ -48,6 +48,7 @@ workflows:
           xcode-project build-ipa \
              --workspace "Unity-iPhone.xcworkspace" \
              --scheme "$XCODE_SCHEME"
+             --verbose
         
     artifacts:
       - build/ios/ipa/*.ipa
