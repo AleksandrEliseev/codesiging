@@ -31,7 +31,7 @@ workflows:
         script: |
           cd $UNITY_IOS_DIR
           xcode-project use-profiles
-
+         
       - name: Set version and build number
         script: |
           cd $UNITY_IOS_DIR
@@ -44,7 +44,7 @@ workflows:
           xcode-project build-ipa \
             --workspace "ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
-            
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual CLANG_ENABLE_MODULES=YES OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=15' SWIFT_SUPPRESS_WARNINGS=YES"
 
     artifacts:
       - build/ios/ipa/*.ipa
