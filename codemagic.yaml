@@ -44,12 +44,23 @@ workflows:
           # Явно заходим в папку перед билдом
           cd $UNITY_IOS_DIR
           
-          # Запуск сборки
-          xcode-project build-ipa \
-             --workspace "Unity-iPhone.xcworkspace" \
-             --scheme "$XCODE_SCHEME" \
-             --verbose 2>&1 | tee xcode_build.log
-
+          # Восстанавливаем права на всякий случай тут тоже
+          find . -type f -name "MapFileParser" -exec chmod +x {} \;
+          
+          echo "Starting Raw xcodebuild..."
+          
+          # Запускаем напрямую xcodebuild. Если упадет, мы увидим реальную причину в консоли.
+          xcodebuild -workspace "Unity-iPhone.xcworkspace" \
+            -scheme "Unity-iPhone" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            archive \
+            -archivePath "build.xcarchive" \
+            CODE_SIGN_STYLE="Manual" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM="ZBXQD67DFW" \
+            PROVISIONING_PROFILE_SPECIFIER="sloygem" \
+            ENABLE_BITCODE=NO
              # Проверяем статус. Если pipefail сработал, $? вернет код ошибки xcode-project
              BUILD_STATUS=$?
              
