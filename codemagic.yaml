@@ -42,10 +42,9 @@ workflows:
       - name: Build the project
         script: |
           xcode-project build-ipa \
-          --workspace "ios/Unity-iPhone.xcworkspace" \
+          --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
           --scheme "$XCODE_SCHEME" \
-          --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual"
-
+        
     artifacts:
       - build/ios/ipa/*.ipa
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
