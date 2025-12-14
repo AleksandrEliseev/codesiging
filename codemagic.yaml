@@ -46,7 +46,7 @@ workflows:
           
           # Запуск сборки
           xcode-project build-ipa \
-             --workspace "$ios/Unity-iPhone.xcworkspace" \
+             --workspace "Unity-iPhone.xcworkspace" \
              --scheme "$XCODE_SCHEME"
         
     artifacts:
