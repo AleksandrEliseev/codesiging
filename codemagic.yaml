@@ -32,8 +32,8 @@ workflows:
           xcode-project use-profiles
           
           # Принудительно отключаем Bitcode (вызывает ошибку 65 в Xcode 14+)
-          xcode-project build-settings --target "Unity-iPhone" --set ENABLE_BITCODE=NO
-          xcode-project build-settings --target "UnityFramework" --set ENABLE_BITCODE=NO
+          /usr/libexec/PlistBuddy -c "Set :StartUp:ENABLE_BITCODE NO" Unity-iPhone.xcodeproj/project.pbxproj || true
+          /usr/libexec/PlistBuddy -c "Set :Unity-iPhone:ENABLE_BITCODE NO" Unity-iPhone.xcodeproj/project.pbxproj || true
 
       - name: Set version and build number
         script: |
