@@ -25,34 +25,66 @@ workflows:
           curl -L "https://drive.usercontent.google.com/download?id=1PwofviVKkFaTZMRuNfHhJxS1GMA1M-Ja&export=download&authuser=0&confirm=t&uuid=aef2fb78-a099-47be-96d2-e8f605bc8203&at=ALWLOp43sX3GF9N7fLlxaJ6tXrxS%3A1765817749095" -o project.zip
           unzip -o project.zip -d ios
 
-     
+          # Если распакованный проект оказался не в ios/vuild, переместим его (адаптируйте под фактический путь из архива):
+          if [ ! -d "ios/vuild" ]; then
+            echo "ios/vuild not found after unzip, attempting to locate Unity-iPhone project..."
+            # пример: если архив разложил в ios/Unity-iPhone, перенесем
+            if [ -f "ios/Unity-iPhone.xcworkspace/contents.xcworkspacedata" ] || [ -d "ios/Unity-iPhone.xcodeproj" ]; then
+              mkdir -p ios/vuild
+              rsync -a --delete ios/ ios/vuild/
+            fi
+          fi
+
+      - name: Normalize project paths
+        script: |
+          cd $UNITY_IOS_DIR
+          PROJECT_PBXPROJ="Unity-iPhone.xcodeproj/project.pbxproj"
+
+          if [ -f "$PROJECT_PBXPROJ" ]; then
+            echo "Checking for absolute path references in project.pbxproj..."
+            grep -n "/Users/marmot/Downloads/toy-world" "$PROJECT_PBXPROJ" || echo "No marmot absolute paths found"
+
+            # Заменим абсолютные пути на относительные внутри SRCROOT
+            # Пример: любые ссылки на .../vuild/AppLocalization/... -> AppLocalization/...
+            # Осторожная замена: только для AppLocalization
+            TMP_FILE="$(mktemp)"
+            sed 's#/Users/marmot/Downloads/toy-world/vuild/AppLocalization/#AppLocalization/#g' "$PROJECT_PBXPROJ" > "$TMP_FILE"
+            mv "$TMP_FILE" "$PROJECT_PBXPROJ"
+
+            echo "Post-fix validation:"
+            grep -n "/Users/marmot/Downloads/toy-world" "$PROJECT_PBXPROJ" && { echo "Warning: some absolute paths remain"; } || echo "Absolute paths removed"
+          else
+            echo "project.pbxproj not found at $PROJECT_PBXPROJ"
+          fi
+
+          # Быстрая проверка наличия локализованных файлов
+          test -f AppLocalization/en.lproj/Localizable.strings || { echo "Missing AppLocalization/en.lproj/Localizable.strings"; exit 1; }
+          test -f AppLocalization/en.lproj/InfoPlist.strings || { echo "Missing AppLocalization/en.lproj/InfoPlist.strings"; exit 1; }
+
+      - name: Clean DerivedData
+        script: |
+          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
+          echo "DerivedData cleaned"
 
       - name: Fix code signing & Bitcode
         script: |
           cd $UNITY_IOS_DIR
-          # Автоматическое применение профилей
           xcode-project use-profiles
-        
 
       - name: Set version and build number
         script: |
           cd $UNITY_IOS_DIR
-          # Важно: agvtool работает только внутри папки с проектом
           agvtool new-marketing-version 1.0
           agvtool new-version -all 1
-      
+
       - name: Build the project
         script: |
-          # Явно заходим в папку перед билдом
           cd $UNITY_IOS_DIR
-          
-          # Запуск сборки
           xcode-project build-ipa \
-             --workspace "Unity-iPhone.xcworkspace" \
+             --workspace "$XCODE_WORKSPACE" \
              --scheme "$XCODE_SCHEME" \
              --verbose 2>&1 | tee xcode_build.log
 
-             
     artifacts:
       - build/ios/ipa/*.ipa
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
