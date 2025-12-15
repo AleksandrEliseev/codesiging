@@ -59,7 +59,7 @@ workflows:
           xcode-project build-ipa \
              --workspace "Unity-iPhone.xcworkspace" \
              --scheme "$XCODE_SCHEME" \
-             --xcodebuild-params "ENABLE_USER_SCRIPT_SANDBOXING=YES COMPILER_INDEX_STORE_ENABLE=NO" \
+             --xcargs "ENABLE_USER_SCRIPT_SANDBOXING=YES COMPILER_INDEX_STORE_ENABLE=NO" \
              --verbose 2>&1 | tee xcode_build.log
 
              
