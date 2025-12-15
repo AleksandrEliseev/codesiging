@@ -84,10 +84,19 @@ workflows:
              --workspace "$XCODE_WORKSPACE" \
              --scheme "$XCODE_SCHEME" \
              --verbose 2>&1 | tee xcode_build.log
+              echo "Listing exported IPAs from build/ios/ipa:"
+              ls -la build/ios/ipa || true
+
+              # Продублируем IPA в верхнеуровневую папку для надежной публикации
+              mkdir -p ../../ipa_out
+              cp -f build/ios/ipa/*.ipa ../../ipa_out/ || { echo "IPA not found after export"; exit 1; }
+              echo "Listing IPA in ipa_out:"
+              ls -la ../../ipa_out
 
     artifacts:
+      # Публикуем только IPA приложения
       - build/ios/ipa/*.ipa
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - ipa_out/*.ipa
 
     publishing:
       app_store_connect:
