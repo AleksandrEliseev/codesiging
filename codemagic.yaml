@@ -22,19 +22,10 @@ workflows:
       - name: Download prepared Xcode project
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=1ikmoDGkkl8kf-c7DiLhTcXvSgMy0BdIv&export=download&authuser=0&confirm=t&uuid=8a3072d0-a1a0-47fe-944b-94b28e38d7e0&at=ALWLOp5w_SdhYu-YjlKPHTYRRJuL%3A1765802775369" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1lxq_WKr97YERCiWSmICDRuNN3hct1Cb_&export=download&authuser=0&confirm=t&uuid=f6c0e3d6-14dc-463a-b620-a7b7ad37fed1&at=ALWLOp53R-D0rgMmE5zNRBLu3X6k%3A1765805158801" -o project.zip
           unzip -o project.zip -d ios
 
-      - name: Install CocoaPods
-        script: |
-          cd $UNITY_IOS_DIR
-          if [ -f "Podfile" ]; then
-            echo "Updating pod specs and installing pods..."
-            pod repo update
-            pod install --repo-update
-          else
-            echo "No Podfile found, skipping CocoaPods installation."
-          fi
+     
 
       - name: Fix code signing & Bitcode
         script: |
