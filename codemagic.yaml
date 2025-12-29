@@ -12,7 +12,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.gem.toy
       vars:
-        UNITY_IOS_DIR: ios/vuild
+        UNITY_IOS_DIR: ios/build
         XCODE_WORKSPACE: "Unity-iPhone.xcworkspace"
         XCODE_SCHEME: "Unity-iPhone"
         BUNDLE_ID: "com.gem.toy"
@@ -22,16 +22,16 @@ workflows:
       - name: Download prepared Xcode project
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=1PwofviVKkFaTZMRuNfHhJxS1GMA1M-Ja&export=download&authuser=0&confirm=t&uuid=aef2fb78-a099-47be-96d2-e8f605bc8203&at=ALWLOp43sX3GF9N7fLlxaJ6tXrxS%3A1765817749095" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1pPchjC-OZySHkkm9pib3FnQGsrVi_cZL&export=download&authuser=0&confirm=t&uuid=69e76f13-1b30-4313-b17d-99fa7f468a3a&at=ANTm3cxQ5kW3A-qmJ19SU_M4rozP%3A1767035247868" -o project.zip
           unzip -o project.zip -d ios
 
-          # Если распакованный проект оказался не в ios/vuild, переместим его (адаптируйте под фактический путь из архива):
-          if [ ! -d "ios/vuild" ]; then
-            echo "ios/vuild not found after unzip, attempting to locate Unity-iPhone project..."
+          # Если распакованный проект оказался не в ios/build, переместим его (адаптируйте под фактический путь из архива):
+          if [ ! -d "ios/build" ]; then
+            echo "ios/build not found after unzip, attempting to locate Unity-iPhone project..."
             # пример: если архив разложил в ios/Unity-iPhone, перенесем
             if [ -f "ios/Unity-iPhone.xcworkspace/contents.xcworkspacedata" ] || [ -d "ios/Unity-iPhone.xcodeproj" ]; then
-              mkdir -p ios/vuild
-              rsync -a --delete ios/ ios/vuild/
+              mkdir -p ios/build
+              rsync -a --delete ios/ ios/build/
             fi
           fi
 
@@ -45,10 +45,10 @@ workflows:
             grep -n "/Users/marmot/Downloads/toy-world" "$PROJECT_PBXPROJ" || echo "No marmot absolute paths found"
 
             # Заменим абсолютные пути на относительные внутри SRCROOT
-            # Пример: любые ссылки на .../vuild/AppLocalization/... -> AppLocalization/...
+            # Пример: любые ссылки на .../build/AppLocalization/... -> AppLocalization/...
             # Осторожная замена: только для AppLocalization
             TMP_FILE="$(mktemp)"
-            sed 's#/Users/marmot/Downloads/toy-world/vuild/AppLocalization/#AppLocalization/#g' "$PROJECT_PBXPROJ" > "$TMP_FILE"
+            sed 's#/Users/marmot/Downloads/toy-world/build/AppLocalization/#AppLocalization/#g' "$PROJECT_PBXPROJ" > "$TMP_FILE"
             mv "$TMP_FILE" "$PROJECT_PBXPROJ"
 
             echo "Post-fix validation:"
@@ -74,8 +74,8 @@ workflows:
       - name: Set version and build number
         script: |
           cd $UNITY_IOS_DIR
-          agvtool new-marketing-version 1.0
-          agvtool new-version -all 1
+          agvtool new-marketing-version 1.1
+          agvtool new-version -all 2
 
       - name: Build the project
         script: |
