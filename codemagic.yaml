@@ -28,31 +28,34 @@ workflows:
           # Если распакованный проект оказался не в ios/build, переместим его (адаптируйте под фактический путь из архива):
           if [ ! -d "ios/build" ]; then
             echo "ios/build not found after unzip, attempting to locate Unity-iPhone project..."
-            # пример: если архив разложил в ios/Unity-iPhone, перенесем
             if [ -f "ios/Unity-iPhone.xcworkspace/contents.xcworkspacedata" ] || [ -d "ios/Unity-iPhone.xcodeproj" ]; then
               mkdir -p ios/build
-              rsync -a --delete ios/ ios/build/
+              rsync -a --delete --exclude "__MACOSX" ios/ ios/build/
             fi
           fi
+          echo "Tree under ios/build:"
+          find ios/build -maxdepth 3 -type f -print | sed 's#^#  #'
 
       - name: Normalize project paths
         script: |
-          cd $UNITY_IOS_DIR
+          set -euo pipefail
+          cd "$UNITY_IOS_DIR"
           PROJECT_PBXPROJ="Unity-iPhone.xcodeproj/project.pbxproj"
 
           if [ -f "$PROJECT_PBXPROJ" ]; then
-            echo "Checking for absolute path references in project.pbxproj..."
-            grep -n "/Users/marmot/Downloads/toy-world" "$PROJECT_PBXPROJ" || echo "No marmot absolute paths found"
+            echo "Before fix - absolute references (preview):"
+            grep -nE "/Users/|sourceTree = \"<absolute>\"" "$PROJECT_PBXPROJ" || true
 
-            # Заменим абсолютные пути на относительные внутри SRCROOT
-            # Пример: любые ссылки на .../build/AppLocalization/... -> AppLocalization/...
-            # Осторожная замена: только для AppLocalization
             TMP_FILE="$(mktemp)"
-            sed 's#/Users/marmot/Downloads/toy-world/build/AppLocalization/#AppLocalization/#g' "$PROJECT_PBXPROJ" > "$TMP_FILE"
+            sed -E '
+              s#/Users/[^;]*/build/AppLocalization/#AppLocalization/#g;
+              s#([^A-Za-z0-9_])/build/AppLocalization/#\1AppLocalization/#g;
+              s#sourceTree = \"<absolute>\";#sourceTree = \"<group>\";#g
+            ' "$PROJECT_PBXPROJ" > "$TMP_FILE"
             mv "$TMP_FILE" "$PROJECT_PBXPROJ"
 
-            echo "Post-fix validation:"
-            grep -n "/Users/marmot/Downloads/toy-world" "$PROJECT_PBXPROJ" && { echo "Warning: some absolute paths remain"; } || echo "Absolute paths removed"
+            echo "After fix - absolute references (preview):"
+            grep -nE "/Users/|sourceTree = \"<absolute>\"" "$PROJECT_PBXPROJ" || echo "OK: no absolute paths remain"
           else
             echo "project.pbxproj not found at $PROJECT_PBXPROJ"
           fi
@@ -68,33 +71,32 @@ workflows:
 
       - name: Fix code signing & Bitcode
         script: |
-          cd $UNITY_IOS_DIR
+          cd "$UNITY_IOS_DIR"
           xcode-project use-profiles
 
       - name: Set version and build number
         script: |
-          cd $UNITY_IOS_DIR
+          cd "$UNITY_IOS_DIR"
           agvtool new-marketing-version 1.1
           agvtool new-version -all 2
 
       - name: Build the project
         script: |
-          cd $UNITY_IOS_DIR
+          cd "$UNITY_IOS_DIR"
           xcode-project build-ipa \
              --workspace "$XCODE_WORKSPACE" \
              --scheme "$XCODE_SCHEME" \
              --verbose 2>&1 | tee xcode_build.log
-              echo "Listing exported IPAs from build/ios/ipa:"
-              ls -la build/ios/ipa || true
 
-              # Продублируем IPA в верхнеуровневую папку для надежной публикации
-              mkdir -p ../../ipa_out
-              cp -f build/ios/ipa/*.ipa ../../ipa_out/ || { echo "IPA not found after export"; exit 1; }
-              echo "Listing IPA in ipa_out:"
-              ls -la ../../ipa_out
+          echo "Listing exported IPAs from build/ios/ipa:"
+          ls -la build/ios/ipa || true
+
+          mkdir -p ../../ipa_out
+          cp -f build/ios/ipa/*.ipa ../../ipa_out/ || { echo "IPA not found after export"; exit 1; }
+          echo "Listing IPA in ipa_out:"
+          ls -la ../../ipa_out
 
     artifacts:
-      # Публикуем только IPA приложения
       - build/ios/ipa/*.ipa
       - ipa_out/*.ipa
 
