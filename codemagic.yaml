@@ -22,7 +22,7 @@ workflows:
       - name: Download prepared Xcode project
         script: |
           echo "Downloading prepared Xcode project..."
-          curl -L "https://drive.usercontent.google.com/download?id=1pPchjC-OZySHkkm9pib3FnQGsrVi_cZL&export=download&authuser=0&confirm=t&uuid=69e76f13-1b30-4313-b17d-99fa7f468a3a&at=ANTm3cxQ5kW3A-qmJ19SU_M4rozP%3A1767035247868" -o project.zip
+          curl -L "https://drive.usercontent.google.com/download?id=1tJq_uStbs9FW7kxsHgQCka2jSvGZvzwc&export=download&authuser=0&confirm=t&uuid=592583d9-ff8e-4b40-8326-e1323378e97f&at=ANTm3czjwP5R3jh2i8TmLttem5_a%3A1768462799857" -o project.zip
           unzip -o project.zip -d ios
 
           # Если распакованный проект оказался не в ios/build, переместим его (адаптируйте под фактический путь из архива):
@@ -77,8 +77,8 @@ workflows:
       - name: Set version and build number
         script: |
           cd "$UNITY_IOS_DIR"
-          agvtool new-marketing-version 1.1
-          agvtool new-version -all 2
+          agvtool new-marketing-version 1.2
+          agvtool new-version -all 3
 
       - name: Build the project
         script: |
