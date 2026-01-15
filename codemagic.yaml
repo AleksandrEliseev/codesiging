@@ -21,6 +21,7 @@ workflows:
     scripts:
       - name: Download prepared Xcode project
         script: |
+          set -euo pipefail
           echo "Downloading prepared Xcode project..."
           curl -L "https://drive.usercontent.google.com/download?id=1xTHeRe5xmxHHO_Wh3IeCQ8C7j0-YXp3k&export=download&authuser=0&confirm=t&uuid=4a57c2de-252c-4e9b-8774-e571bb4453a4&at=ANTm3cxDAKh-hGChUtFjHJYvnT0j%3A1768463359854" -o project.zip
           unzip -o project.zip -d ios
@@ -33,71 +34,100 @@ workflows:
               rsync -a --delete --exclude "__MACOSX" ios/ ios/build/
             fi
           fi
-          echo "Tree under ios/build:"
-          find ios/build -maxdepth 3 -type f -print | sed 's#^#  #'
 
-      - name: Normalize project paths
+          echo "Tree under ios/build (top-level):"
+          find ios/build -maxdepth 3 -type d -print | sed 's#^#  #'
+
+      - name: Normalize project paths (remove absolute /Users/... refs)
         script: |
           set -euo pipefail
           cd "$UNITY_IOS_DIR"
           PROJECT_PBXPROJ="Unity-iPhone.xcodeproj/project.pbxproj"
 
-          if [ -f "$PROJECT_PBXPROJ" ]; then
-            echo "Before fix - absolute references (preview):"
-            grep -nE "/Users/|sourceTree = \"<absolute>\"" "$PROJECT_PBXPROJ" || true
-
-            TMP_FILE="$(mktemp)"
-            sed -E '
-              s#/Users/[^;]*/build/AppLocalization/#AppLocalization/#g;
-              s#([^A-Za-z0-9_])/build/AppLocalization/#\1AppLocalization/#g;
-              s#sourceTree = \"<absolute>\";#sourceTree = \"<group>\";#g
-            ' "$PROJECT_PBXPROJ" > "$TMP_FILE"
-            mv "$TMP_FILE" "$PROJECT_PBXPROJ"
-
-            echo "After fix - absolute references (preview):"
-            grep -nE "/Users/|sourceTree = \"<absolute>\"" "$PROJECT_PBXPROJ" || echo "OK: no absolute paths remain"
-          else
+          if [ ! -f "$PROJECT_PBXPROJ" ]; then
             echo "project.pbxproj not found at $PROJECT_PBXPROJ"
+            exit 1
           fi
 
-          # Быстрая проверка наличия локализованных файлов
+          echo "Before fix - absolute references (preview):"
+          grep -nE "/Users/|sourceTree = \"<absolute>\"" "$PROJECT_PBXPROJ" || true
+
+          TMP_FILE="$(mktemp)"
+          sed -E '
+            # Любые абсолютные пути к AppLocalization -> относительный путь
+            s#/Users/[^;]*/build/AppLocalization/#AppLocalization/#g;
+            # Любые относительные ссылки с префиксом build/AppLocalization -> AppLocalization
+            s#([^A-Za-z0-9_])/build/AppLocalization/#\1AppLocalization/#g;
+            # Абсолютные sourceTree -> group
+            s#sourceTree = \"<absolute>\";#sourceTree = \"<group>\";#g
+          ' "$PROJECT_PBXPROJ" > "$TMP_FILE"
+          mv "$TMP_FILE" "$PROJECT_PBXPROJ"
+
+          echo "After fix - absolute references (preview):"
+          grep -nE "/Users/|sourceTree = \"<absolute>\"" "$PROJECT_PBXPROJ" || echo "OK: no absolute paths remain"
+
+          # Проверка наличия локализованных файлов
           test -f AppLocalization/en.lproj/Localizable.strings || { echo "Missing AppLocalization/en.lproj/Localizable.strings"; exit 1; }
           test -f AppLocalization/en.lproj/InfoPlist.strings || { echo "Missing AppLocalization/en.lproj/InfoPlist.strings"; exit 1; }
 
+      - name: Fix CocoaPods script permissions (AppsFlyer XCFrameworks)
+        script: |
+          set -euo pipefail
+          cd "$UNITY_IOS_DIR"
+
+          if [ -d "Pods" ]; then
+            echo "Fixing executable permissions for *.sh in Pods..."
+            find "Pods" -type f -name "*.sh" -print -exec chmod +x {} \;
+          else
+            echo "Pods directory not found (continuing)."
+          fi
+
+          if [ -f "Pods/Target Support Files/AppsFlyerFramework/AppsFlyerFramework-xcframeworks.sh" ]; then
+            echo "AppsFlyerFramework-xcframeworks.sh permissions:"
+            ls -la "Pods/Target Support Files/AppsFlyerFramework/AppsFlyerFramework-xcframeworks.sh"
+          fi
+
       - name: Clean DerivedData
         script: |
+          set -euo pipefail
           rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
           echo "DerivedData cleaned"
 
-      - name: Fix code signing & Bitcode
+      - name: Fix code signing
         script: |
+          set -euo pipefail
           cd "$UNITY_IOS_DIR"
           xcode-project use-profiles
 
       - name: Set version and build number
         script: |
+          set -euo pipefail
           cd "$UNITY_IOS_DIR"
           agvtool new-marketing-version 1.2
           agvtool new-version -all 3
 
-      - name: Build the project
+      - name: Build the project (IPA)
         script: |
+          set -euo pipefail
           cd "$UNITY_IOS_DIR"
+
           xcode-project build-ipa \
-             --workspace "$XCODE_WORKSPACE" \
-             --scheme "$XCODE_SCHEME" \
-             --verbose 2>&1 | tee xcode_build.log
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME" \
+            --verbose 2>&1 | tee xcode_build.log
 
           echo "Listing exported IPAs from build/ios/ipa:"
-          ls -la build/ios/ipa || true
+          ls -la build/ios/ipa
 
+          # Продублируем IPA в верхнеуровневую папку для надежной публикации
           mkdir -p ../../ipa_out
-          cp -f build/ios/ipa/*.ipa ../../ipa_out/ || { echo "IPA not found after export"; exit 1; }
+          cp -f build/ios/ipa/*.ipa ../../ipa_out/
           echo "Listing IPA in ipa_out:"
           ls -la ../../ipa_out
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - ios/build/xcode_build.log
+      - ios/build/build/ios/ipa/*.ipa
       - ipa_out/*.ipa
 
     publishing:
